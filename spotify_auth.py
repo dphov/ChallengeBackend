@@ -20,13 +20,9 @@ class SpotifyAuth(object):
             "&response_type=code"
         )
 
-    def getToken(self, code, client_id, client_secret, redirect_uri):
+    def getToken(self, client_id, client_secret, redirect_uri):
         body = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": redirect_uri,
-            "client_id": client_id,
-            "client_secret": client_secret,
+            "grant_type": "client_credentials",
         }
 
         encoded = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
@@ -35,33 +31,19 @@ class SpotifyAuth(object):
             "Authorization": f"Basic {encoded}",
         }
 
-        post = requests.post(self.SPOTIFY_URL_TOKEN, params=body, headers=headers)
-        return self.handleToken(json.loads(post.text))
+        post = requests.post(self.SPOTIFY_URL_TOKEN, data=body, headers=headers)
+        return self.handleToken(json.dumps(post.json()))
 
     def handleToken(self, response):
-        if "error" in response:
+        dict_data = json.loads(response)
+        if "error" in dict_data:
             return response
         return {
-            key: response[key]
-            for key in ["access_token", "expires_in", "refresh_token"]
+            "access_token": dict_data["access_token"],
+            "expires_in": dict_data["expires_in"],
         }
 
-    def refreshAuth(self, refresh_token):
-        body = {"grant_type": "refresh_token", "refresh_token": refresh_token}
-
-        post_refresh = requests.post(
-            self.SPOTIFY_URL_TOKEN, data=body, headers=self.HEADER
-        )
-        p_back = json.dumps(post_refresh.text)
-
-        return self.handleToken(p_back)
-
-    def getUser(self):
-        return self.getAuth(
-            self.CLIENT_ID, f"{self.CALLBACK_URL}/callback", self.SCOPE,
-        )
-
-    def getUserToken(self, code):
+    def getUserToken(self):
         return self.getToken(
-            code, self.CLIENT_ID, self.CLIENT_SECRET, f"{self.CALLBACK_URL}/callback"
+            self.CLIENT_ID, self.CLIENT_SECRET, f"{self.CALLBACK_URL}/callback"
         )

@@ -18,3 +18,82 @@ Feel free to move it and re-organise as you please, we expect a well organised a
 - As stated above, to test your server we will `GET /api/artists/` and we expect a nicely organised payload of artists. Make sure to use proper serialization and handle http errors.
 
 All stability, performance, efficiency adds-up are highly recommended.
+
+
+
+
+
+
+
+## Pre-setup
+
+Install redis, postgres, pipenv, python > 3.6
+
+
+Please fill up your `.env` file before launch
+You could find an example at `.env.example`
+
+```
+pip install pipenv
+pipenv install
+```
+
+Run `init.py` to init database
+```
+python init.py
+```
+
+## Redis session keys
+
+Redis is used as session storage for storing: 
+- OAuth2 key in `access_token`
+- Validity time in seconds in `expires_in`
+- The time to refresh key in `refresh_token_at`
+- Information about last data fetch from spotify in `last_data_fetch_date`
+
+
+## Running instruction
+
+```
+python app.py
+```
+
+
+After first recieved request:
+
+>DB will be populated with actual data from Spotify's `/v1/browse/new-releases` endpoint. And session keys will be set.
+
+Every next request:
+>System will check each if it have to update data from Spotify. It will look at date. If last update was more than 1 day, it will refetch the actual data in the moment then user will have a request.
+
+
+### Example of response from `GET /api/artists/` request
+
+```
+[
+  {
+    "release_from_artist": "Petit Biscuit",
+    "release_name": "Parachute",
+    "release_release_date": "2020-10-30",
+    "release_spotify_id": "3t4ZHswZdOfXd6TcZ51uHl",
+    "release_total_tracks": 9,
+    "release_url": "https://open.spotify.com/album/3t4ZHswZdOfXd6TcZ51uHl"
+  },
+  ...
+]
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
